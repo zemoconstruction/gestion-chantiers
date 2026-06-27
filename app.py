@@ -20,13 +20,14 @@ else:
     APP_DIR = RESOURCE_DIR
 
 BASE_DIR = APP_DIR
-DB_PATH = os.path.join(APP_DIR, "data", "gestion_chantiers.db")
-os.makedirs(os.path.join(APP_DIR, "data"), exist_ok=True)
+DATA_DIR = os.environ.get("DATA_DIR", os.path.join(APP_DIR, "data"))
+DB_PATH = os.path.join(DATA_DIR, "gestion_chantiers.db")
+os.makedirs(DATA_DIR, exist_ok=True)
 
 app = Flask(__name__,
             template_folder=os.path.join(RESOURCE_DIR, "templates"),
             static_folder=os.path.join(RESOURCE_DIR, "static"))
-app.secret_key = "changez-cette-cle-secrete-en-production-2026"
+app.secret_key = os.environ.get("SECRET_KEY", "changez-cette-cle-secrete-en-production-2026")
 
 
 def get_db():
@@ -683,9 +684,14 @@ def chantiers_list():
 
 if __name__ == "__main__":
     init_db()
+    port = int(os.environ.get("PORT", 5000))
     print("="*60)
     print(" GESTION CHANTIERS - démarrage du serveur")
-    print(" Accès local : http://localhost:5000")
-    print(" Accès réseau (autres PC/téléphones) : http://<IP-DE-CE-PC>:5000")
+    print(f" Accès local : http://localhost:{port}")
+    print(" Accès réseau (autres PC/téléphones) : http://<IP-DE-CE-PC>:{port}")
     print("="*60)
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
+else:
+    # Cas du déploiement en production via Gunicorn (Render, etc.)
+    # __main__ n'est pas exécuté : on initialise donc la base ici.
+    init_db()
